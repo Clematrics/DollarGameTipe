@@ -1,0 +1,926 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{cardsheader}[Package pour gérer les commandes custom et les packages à importer pour générer correctement les fiches]
+
+%- ----------  PCKGE ---------- -%
+
+% langage
+
+\usepackage[french]{babel}
+\selectlanguage{french}
+
+% load prématuré pour éviter les clashs d'options
+
+\usepackage[luatex, dvipsnames]{xcolor}
+
+% autres
+
+\usepackage{adjustbox}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{dsfont}
+\usepackage{bm}
+\usepackage{calc}
+\usepackage[makeroom]{cancel}
+\usepackage{centernot}
+\usepackage{enumitem}
+\usepackage{esint}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{nicefrac}
+\usepackage{textcomp}
+\usepackage{scalerel}
+\usepackage{stmaryrd}
+\usepackage{tabularx}
+\usepackage{xfrac}
+\usepackage{xifthen}
+\usepackage{xparse}
+\usepackage{xstring}
+
+% TikZ
+
+\usepackage{tikz}
+\usetikzlibrary{automata}
+\usetikzlibrary{babel}
+\usetikzlibrary{calc}
+\usetikzlibrary{intersections}
+\usetikzlibrary{patterns}
+\usetikzlibrary{positioning}
+\usetikzlibrary{plotmarks}
+\usepackage[european resistors]{circuitikz}
+
+% Option clash
+
+%- ----------  COMPT ---------- -%
+
+\usepackage{ifluatex}
+\newif\ifunicode
+\ifluatex\unicodetrue\fi
+\ifunicode
+	\usepackage[T1]{fontenc}
+	\usepackage{newunicodechar}
+	\newcommand{\DeclareUnicodeCharacter}[2]{
+		\begingroup\lccode`|=\string"#1\relax
+		\lowercase{\endgroup\newunicodechar{|}}{#2}
+	}
+\else
+	\usepackage[utf8]{inputenc}
+\fi
+
+%- ----------  EXPRT ---------- -%
+
+\newcommand{\nightmode}{\color{white}}
+
+\usepackage{transparent}
+
+\setlength{\fboxsep}{.8pt}
+\setlength{\fboxrule}{.2pt}
+\tikzstyle{mybox} = [opacity=0.01]
+%\newcommand{\mathexport}[1]{\color{white!1!transparent}\fbox{\raisebox{0pt}[\maxof\height\depth][\maxof\height\depth]{#1}}}
+%\fcolorbox{invisible}{white}
+
+
+\newcommand{\mathexport}[1]{
+	\newlength{\mydepth}
+	\setlength{\mydepth}{\depthof{#1}}
+	\wlog{depth=\the\mydepth}
+	\newlength{\mytotalheight}
+	\setlength{\mytotalheight}{\totalheightof{#1}}
+	\wlog{totalheight=\the\mytotalheight}
+	%\newlength{\mywidth}
+	%\setlength{\mywidth}{\widthof{#1}}
+	%\rlap{\color{black}\vrule width\mywidth height.15pt depth.15pt}
+	#1
+	%\llap{\color{black}\vrule width\mywidth height.15pt depth.15pt}
+}
+%\newcommand{\mathexport}[1]{\raisebox{0pt}[\maxof\height\depth][\maxof\height\depth]{#1}}
+
+
+
+%\newcommand{\mathexport}[1]{
+%\begin{tikzpicture}
+%	\node [mybox] (border) at (0,0) {\fbox{\raisebox{0pt}[\maxof\height\depth][\maxof\height\depth]{{#1}}}};
+%	\draw (0,0) node {\raisebox{0pt}[\maxof\height\depth][\maxof\height\depth]{#1}};
+%\end{tikzpicture}
+%}
+%\newcommand{\mathexport}[1]{{\color{lightgray}#1}}
+
+%- ----------  PROGM ---------- -%
+
+\def\lengthOne{1}
+
+\newcommand{\iflengthOne}[3]{
+	\noexpandarg
+	\StrLen{#1}[\internalresult]
+	\expandarg
+	\ifthenelse{\internalresult = \lengthOne}{#2}{#3}
+}
+
+\newcommand{\firstmathtoken}[1]{
+	\ifthenelse{\equal{#1}{\e}}{\e*}{#1}
+%	\ifthenelse{\isequivalentto{#1}{\e}}
+%	{\e*}
+%	{#1}
+}
+
+%- ----------  CORRT ---------- -%
+
+% gestion du caractère °
+\DeclareUnicodeCharacter{B0}{\textdegree}
+\DeclareUnicodeCharacter{AB}{\og}
+\DeclareUnicodeCharacter{BB}{\fg{}}
+
+% correction de la taille des plus et des moins dans les styles de script
+%\makeatletter
+%\mathcode`\-="8000
+%\def\@minus{
+%	\mathchoice
+%	{\mathchar"2200}
+%	{\mathchar"2200}
+%	{\raisebox{.05em}{\scalebox{.5}{\mathchar"0200}}}
+%	{\raisebox{.07em}{\scalebox{.3}{\mathchar"0200}}}
+%}
+%{
+%	\catcode`\-=\active
+%	\gdef-\@minus
+%}
+%
+%\mathcode`\+="8000
+%\def\@plus{
+%	\mathchoice
+%	{\mathchar"202B}
+%	{\mathchar"202B}
+%	{\raisebox{.05em}{\scalebox{.5}{\mathchar"002B}}}
+%	{\raisebox{.07em}{\scalebox{.3}{\mathchar"002B}}}
+%}
+%{
+%	\catcode`\+=\active
+%	\gdef+\@plus
+%}
+%\makeatother
+
+% xcolor pour les maths
+\makeatletter
+\renewcommand*{\@textcolor}[3]{%
+	\protect\leavevmode
+	\begingroup
+	\color#1{#2}#3%
+	\endgroup
+}
+\makeatother
+
+% redéfinition des symboles plus petit ou égal et plus grand ou égal
+\let\oldleq\leq
+\let\leq\leqslant
+\let\le\leq
+\let\oldgeq\geq
+\let\geq\geqslant
+\let\ge\geq
+
+% redéfinition de la différence des ensembles
+\let\oldsetminus\setminus
+\let\setminus\smallsetminus
+
+% définition d'une commande pour parenthéser correctement
+%intégrer a dans environnement ?
+\delimitershortfall-1sp % pour que les délimiteurs augmentes de taille automatiquement dès qu'ils sont imbriqués
+
+\NewDocumentCommand{\p}{s s m}{
+	\IfBooleanTF{#2}{
+		\setlength\vboxcorr{(\totalheightof{$#3$} - \heightof{$#3$})/2}
+		\raisebox{\vboxcorr}{$\begin{pmatrix}#3\end{pmatrix}$}
+	}{
+		\IfBooleanTF{#1}{
+			\setlength\vboxcorr{(\depthof{$#3$} - \totalheightof{$#3$})/2}
+			\raisebox{\vboxcorr}{$\begin{pmatrix}#3\end{pmatrix}$}
+		}{
+			%refaire ça uassi avec des pmatrix ?
+			\left(#3\right)
+		}
+	}
+}
+
+
+% if first arg is a *, return the second arg with a star concatenated
+\newcommand{\starcommand}[2]{
+	\IfBooleanTF{#1}{#2*}{#2}
+}
+
+\newcommand{\suffix}[2]{#2#1}
+
+\newcommand{\DeclareBigOperator}[1]{
+	\expandafter\suffix\expandafter{\csname #1\endcsname}{\expandafter\let\csname old#1\endcsname}
+	\expandafter\suffix\csname old#1\endcsname\DeclareBigOperatorAux{#1}
+	% \old... en premier arg, ... en second
+}
+\newcommand{\DeclareBigOperatorAux}[2]{
+	\expandafter\NewDocumentCommand\expandafter{\csname #2subscriptsuperscript\endcsname}{s o o o m}{
+		\ifthenelse{\isempty{##3}}
+		{\smashoperator[r]{#1\sb{\IfValueTF{##2}{\substack{##5}}{\mathclap{\substack{##5}}}}\sp{\IfValueTF{##2}{\substack{##4}}{\mathclap{\substack{##4}}}}}}
+		{\smashoperator[r]{#1\sb{\IfValueTF{##2}{\substack{##3}}{\mathclap{\substack{##3}}}}\sp{\IfValueTF{##2}{\substack{##5}}{\mathclap{\substack{##5}}}}}}
+	}
+	\expandafter\NewDocumentCommand\expandafter{\csname #2subscript\endcsname}{s o m t^}{
+		\IfBooleanTF{##4}
+		{\starcommand{##1}{\csname #2subscriptsuperscript\endcsname}[##2][##3][]}
+		{\smashoperator[r]{#1\sb{\IfValueTF{##2}{\substack{##3}}{\mathclap{\substack{##3}}}}}}
+	}
+	\expandafter\NewDocumentCommand\expandafter{\csname #2superscript\endcsname}{s o m t_}{
+		\IfBooleanTF{##4}
+		{\starcommand{##1}{\csname #2subscriptsuperscript\endcsname}[##2][][##3]}
+		{\smashoperator[r]{#1\sp{\IfValueTF{##2}{\substack{##3}}{\mathclap{\substack{##3}}}}}}
+	}
+	\expandafter\RenewDocumentCommand\expandafter{\csname #2\endcsname}{s o t_ t^}{
+		\IfBooleanTF{##3}
+		{\starcommand{##1}{\csname #2subscript\endcsname}[##2]}
+		{
+			\IfBooleanTF{##4}
+			{\starcommand{##1}{\csname #2superscript\endcsname}[##2]}
+			{#1}
+		}
+	}
+}
+%\newcommand{\DeclareBigOperatorAux}[2]{
+%	\expandafter\NewDocumentCommand\expandafter{\csname #2subscriptsuperscript\endcsname}{s o o o m}{
+%		\ifthenelse{\isempty{##3}}
+%		{#1\IfBooleanTF{##1}\nolimits\limits\sb{\IfBooleanF{##1}{\IfValueF{##2}\mathclap}{\substack{##5}}}\sp{\IfBooleanF{##1}{\IfValueF{##2}\mathclap}{\substack{##4}}}}
+%		{#1\IfBooleanTF{##1}\nolimits\limits\sb{\IfBooleanF{##1}{\IfValueF{##2}\mathclap}{\substack{##3}}}\sp{\IfBooleanF{##1}{\IfValueF{##2}\mathclap}{\substack{##5}}}}
+%	}
+%	\expandafter\NewDocumentCommand\expandafter{\csname #2subscript\endcsname}{s o m t^}{
+%		\IfBooleanTF{##4}
+%		{\starcommand{##1}{\csname #2subscriptsuperscript\endcsname}[##2][##3][]}
+%		{#1\IfBooleanF{##1}\limits\sb{\IfBooleanF{##1}{\IfValueF{##2}\mathclap}{\substack{##3}}}}
+%	}
+%	\expandafter\NewDocumentCommand\expandafter{\csname #2superscript\endcsname}{s o m t_}{
+%		\IfBooleanTF{##4}
+%		{\starcommand{##1}{\csname #2subscriptsuperscript\endcsname}[##2][][##3]}
+%		{#1\IfBooleanF{##1}\limits\sp{\IfBooleanF{##1}{\IfValueF{##2}\mathclap}{\substack{##3}}}}
+%	}
+%	\expandafter\RenewDocumentCommand\expandafter{\csname #2\endcsname}{s o t_ t^}{
+%		\IfBooleanTF{##3}
+%		{\starcommand{##1}{\csname #2subscript\endcsname}[##2]}
+%		{
+%			\IfBooleanTF{##4}
+%			{\starcommand{##1}{\csname #2superscript\endcsname}[##2]}
+%			{#1}
+%		}
+%	}
+%}
+
+\DeclareBigOperator{bigcup}
+\DeclareBigOperator{bigcap}
+\DeclareBigOperator{sum}
+\DeclareBigOperator{prod}
+\DeclareBigOperator{int}
+\DeclareBigOperator{iint}
+\DeclareBigOperator{iiint}
+\DeclareBigOperator{oint}
+\def\Xiint#1{\mathchoice%
+	{\XXiint\displaystyle\textstyle{#1}}% 
+	{\XXiint\textstyle\scriptstyle{#1}}% 
+	{\XXiint\scriptstyle\scriptscriptstyle{#1}}% 
+	{\XXiint\scriptscriptstyle\scriptscriptstyle{#1}}% 
+	\!\iint}%
+\def\XXiint#1#2#3{{\setbox0=\hbox{$#1{#2#3}{\iint}$}%
+		\vcenter{\hbox{$#2#3$}}\kern-.5\wd0}}%
+\renewcommand{\oiint}{\Xiint\bigcirc}
+\DeclareBigOperator{oiint}
+\DeclareBigOperator{bigoplus}
+
+% vec command
+\let\oldvec\vec
+
+% epsilon variable
+\let\oldepsilon\epsilon
+\let\epsilon\varepsilon
+\let\varepsilon\oldepsilon
+
+% phi variable
+\let\oldphi\phi
+\let\phi\varphi
+\let\varphi\oldphi
+
+%- ----------  DELIM ---------- -%
+
+
+%- ----------  COMMN ---------- -%
+
+% texte souvent utilisé dans les phrases
+\newcommand{\ie}{\textit{i.e. }}
+
+% \text souvent utilisé dans le mode maths
+\newcommand{\tq}{\oldtext{ tq }}
+\newcommand{\cste}{\oldtext{ cste }}
+\renewcommand{\ieme}{{}^{\oldtext{ième}}}
+
+\let\oldtext\text
+\renewcommand{\text}[1]{\oldtext{\tabular[t]{@{}c@{}}#1\endtabular}}
+
+% roman numerals
+\makeatletter
+\newcommand{\romannum}[1]{\expandafter\@slowromancap\romannumeral #1@}
+\makeatother
+
+% stands for flexible cancel
+% first arg, optional : character which cancel will apply on according to its size
+% second arg, optional : horizontal correction using spaces
+% third arg, optional : vertical correction using measure units (default : -.25em)
+% fourth arg, mandatory : symbol which appears to be canceled
+%\newcommand{\fcancel}[4][\setminus][\,][-.25em]{
+%	\ensuremath{\mathrlap{\mathrlap{\raisebox{#3}{#4}#2}\xcancel{\hphantom{#1}}}\hphantom{#4}}
+%}
+
+% opérateurs et fonctions de base
+%\newcommand{\abs}[1]{\left|#1\right|}
+%\newcommand{\abs}[1]{\left|\vcenter{\hbox{$#1$}}\right|}
+\newlength\vboxcorr
+\NewDocumentCommand{\abs}{s m}{
+	\IfBooleanTF{#1}{
+		\setlength\vboxcorr{(\depthof{$#2$} - \totalheightof{$#2$})/2}
+		\raisebox{\vboxcorr}{$\begin{vmatrix}#2\end{vmatrix}$}
+	}{
+		\left|#2\right|
+	}
+}
+
+% opérateurs trigonométriques
+\DeclareMathOperator{\opcos}{cos}
+\DeclareMathOperator{\opsin}{sin}
+\DeclareMathOperator{\optan}{tan}
+\DeclareMathOperator{\opcotan}{cotan}
+\DeclareMathOperator{\opacos}{arccos}
+\DeclareMathOperator{\opasin}{arcsin}
+\DeclareMathOperator{\opatan}{arctan}
+\DeclareMathOperator{\opch}{ch}
+\DeclareMathOperator{\opsh}{sh}
+\DeclareMathOperator{\opth}{th}
+\DeclareMathOperator{\opcoth}{coth}
+\DeclareMathOperator{\opach}{argch}
+\DeclareMathOperator{\opash}{argsh}
+\DeclareMathOperator{\opath}{argth}
+\DeclareMathOperator{\opacoth}{argcoth}
+
+\renewcommand{\cos}[1]{\opcos\!\left(#1\right)}
+\renewcommand{\sin}[1]{\opsin\!\left(#1\right)}
+\renewcommand{\tan}[1]{\optan\!\left(#1\right)}
+\newcommand{\cotan}[1]{\opcotan\!\left(#1\right)}
+\newcommand{\acos}[1]{\opacos\!\left(#1\right)}
+\newcommand{\asin}[1]{\opasin\!\left(#1\right)}
+\newcommand{\atan}[1]{\opatan\!\left(#1\right)}
+\newcommand{\ch}[1]{\opch\!\left(#1\right)}
+\newcommand{\sh}[1]{\opsh\!\left(#1\right)}
+\renewcommand{\th}[1]{\opth\!\left(#1\right)}
+\renewcommand{\coth}[1]{\opcoth\!\left(#1\right)}
+\newcommand{\ach}[1]{\opach\!\left(#1\right)}
+\newcommand{\ash}[1]{\opash\!\left(#1\right)}
+\newcommand{\ath}[1]{\opath\!\left(#1\right)}
+\newcommand{\acoth}[1]{\opacoth\!\left(#1\right)}
+
+% nombres complexes
+\renewcommand{\i}{{i\mkern1mu}}
+\newcommand{\re}[1]{\mathfrak{Re}\!\left(#1\right)}
+\newcommand{\im}[1]{\mathfrak{Im}\!\left(#1\right)}
+\newcommand{\conj}[1]{
+	\iflengthOne{#1}{\bar{#1}}{\overline{#1}}
+}
+
+% vecteurs
+\renewcommand{\vec}[1]{
+	\iflengthOne{#1}{\oldvec{#1}}{\overrightarrow{#1}}
+}
+
+\NewDocumentCommand{\norm}{s s m}{
+	\IfBooleanTF{#1}{
+		\IfBooleanTF{#2}{
+			\setlength\vboxcorr{(\depthof{$#3$} - \totalheightof{$#3$})/2}
+			\raisebox{\vboxcorr}{$\begin{Vmatrix}#3\end{Vmatrix}$}
+		}{
+			\setlength\vboxcorr{(\heightof{$#3$} - \totalheightof{$#3$})/2}
+			\raisebox{\vboxcorr}{$\begin{Vmatrix}#3\end{Vmatrix}$}
+		}
+	}{
+		\left\lVert#3\right\rVert
+	}
+}
+
+
+%- ----------  MATHS  ---------- -%
+
+%logique
+\newcommand{\cn}{\Longrightarrow}
+\newcommand{\cs}{\Longleftarrow}
+\newcommand{\cns}{\Longleftrightarrow}
+
+% ensembles
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\D}{\mathbb D}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\R}{\mathbb R}
+\newcommand{\C}{\mathbb C}
+
+% ensembles particuliers
+\newcommand{\U}{\mathbb U}
+\renewcommand{\P}{\mathbb P}
+\newcommand{\matrixset}[2]{\mathcal{M}_{#1}\p{#2}}
+
+% ensembles génériques
+\newcommand{\K}{\mathbb K}
+\renewcommand{\L}{\mathbb L}
+
+\newcommand{\base}{\mathcal{B}}
+\newcommand{\famille}{\mathcal{F}}
+\newcommand{\lineaire}{\mathcal{L}}
+\newcommand{\matrice}{\mathcal{M}}
+
+% partie d'un ensemble
+\newcommand{\setpart}[1]{\mathcal P\left(#1\right)}
+
+% construction d'ensembles
+\NewDocumentCommand{\set}{m o}{
+	\left\{#1\IfNoValueTF{#2}{}{\ \middle|\ #2}\right\}
+}
+
+% intervalles (rg pour range)
+\newcommand{\intrg}[2]{\llbracket #1,#2\rrbracket}
+\newcommand{\firstints}[1]{\llbracket #1\rrbracket}
+\makeatletter
+\NewDocumentCommand{\range@next@closed}{g d() d[]}{
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{
+				\text{Interval error!}
+			}{
+				#3\right]
+			}
+		}{
+			#2\right)
+		}
+	}{
+		#1\right[
+	}
+}
+\NewDocumentCommand{\range@next@opened}{d() d[] g}{
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{
+				\text{Interval error!}
+			}{
+				#3\right[
+			}
+		}{
+			#2\right]
+		}
+	}{
+		#1\right)
+	}
+}
+\NewDocumentCommand{\range}{d[] g d()}{
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{
+				\text{Interval error!}
+			}{
+				\left(#3,\range@next@opened
+			}
+		}{
+			\left]#2,\IfValueTF{#3}{\range@next@opened(#3)}{\range@next@opened}
+		}
+	}{
+		\left[#1,\IfValueTF{#2}{\range@next@closed{#2}}{\IfValueTF{#3}{\range@next@closed(#3)}{\range@next@closed}}
+	}
+}
+\makeatother
+
+% opérateurs sur les ensembles
+\newcommand{\card}[1]{\left|#1\right|}
+\DeclareMathOperator{\opCard}{Card}
+\newcommand{\tcard}[1]{\opCard\iflengthOne{#1}{#1}{\left(#1\right)}}
+\newcommand{\compl}[1]{\overline{#1}}
+\newcommand{\equip}{\approx}
+
+% opérateurs topologiques
+\newcommand{\adh}[1]{\overline{#1}}
+\newcommand{\interior}[1]{\mathring{#1}}
+
+% classes d'équivalence
+\newcommand{\class}[1]{\iflengthOne{#1}{\bar{#1}}{\overline{#1}}}
+
+% structures arithmétiques
+\newcommand{\monoide}[2]{\left(#1, #2\right)}
+\newcommand{\groupe}[2]{\left(#1, #2\right)}
+\newcommand{\anneau}[3]{\left(#1, #2, #3\right)}
+\newcommand{\corps}[3]{\left(#1, #2, #3\right)}
+\newcommand{\evect}[3]{\p{#1, #2, #3}}
+\newcommand{\algebre}[4]{\left(#1, #2, #3, #4\right)}
+
+% opérateurs arithmétiques
+\newcommand{\pgcd}{\wedge}
+\newcommand{\ppcm}{\vee}
+\newcommand{\valuation}[2]{v_{#1}\left(#2\right)}
+
+% écriture de fonctions
+\makeatletter
+%\setlength\arraycolsep{3pt}
+\let\defaultarraycolsep\arraycolsep
+
+\NewDocumentCommand{\func}{s g o o d() d()}{
+	\IfValueT{#2}{#2:}
+	\IfValueTF{#5}{\IfValueTF{#3}{\left|}{\left.}}{\left.}
+	\newtoks\func@arraycontent
+	\func@arraycontent={}
+	\IfValueT{#3}{
+		\func@arraycontent={#3 & \IfBooleanTF{#1}\rightarrow\longrightarrow & #4}
+		\IfValueT{#5}{
+			\func@arraycontent=\expandafter{\the\func@arraycontent \\}
+		}
+	}
+	\IfValueT{#5}{
+		\func@arraycontent=\expandafter{\the\func@arraycontent #5 & \IfBooleanTF{#1}\mapsto\longmapsto & #6}
+	}	
+	%\expandafter\let\expandafter\func@arrayprefix\begingroup\begin{array}{rcl}\endgroup
+	\IfValueTF{#1}{
+		\setlength\arraycolsep{0.1em}
+	}{
+		\setlength\arraycolsep{1em}
+	}
+	%\expandafter\func@arrayprefix\func@arraycontent
+	\begin{array}{rcl}
+		\the\func@arraycontent
+	\end{array}
+	\setlength\arraycolsep\defaultarraycolsep
+	\right.
+}
+\makeatother
+
+%\NewDocumentCommand{\func}{s m O{} O{} D(){} D(){}}{
+%	%\newcommand{\func@body}{
+%%	\let\func@body{
+%%		\ifthenelse{\isempty{#3}\AND\isempty{#4}}{
+%%			\left.
+%%			\setlength\arraycolsep{2pt}
+%%			#5\ \IfBooleanTF{#1}\mapsto\longmapsto\ #6
+%%			\setlength\arraycolsep\defaultarraycolsep
+%%		}{
+%%			\ifthenelse{\isempty{#5}\AND\isempty{#6}}{
+%%				\left.
+%%				\setlength\arraycolsep{2pt}
+%%				#3\ \IfBooleanTF{#1}\rightarrow\longrightarrow\ #4
+%%				\setlength\arraycolsep\defaultarraycolsep
+%%			}{
+%%				\left|
+%%				\begin{array}{rcl}
+%%					#3 & \longrightarrow & #4 \\
+%%					#5 & \longmapsto & #6 \\
+%%				\end{array}
+%%			}
+%%		}
+%%	}
+%	\ifthenelse{\isempty{#2}}{
+%		\ifthenelse{\isempty{#3}\AND\isempty{#4}}{
+%			\left.
+%			\setlength\arraycolsep{2pt}
+%			#5\ \IfBooleanTF{#1}\mapsto\longmapsto\ #6
+%			\setlength\arraycolsep\defaultarraycolsep
+%		}{
+%			\ifthenelse{\isempty{#5}\AND\isempty{#6}}{
+%				\left.
+%				\setlength\arraycolsep{2pt}
+%				#3\ \IfBooleanTF{#1}\rightarrow\longrightarrow\ #4
+%				\setlength\arraycolsep\defaultarraycolsep
+%			}{
+%				\left|
+%				\begin{array}{rcl}
+%					#3 & \longrightarrow & #4 \\
+%					#5 & \longmapsto & #6 \\
+%				\end{array}
+%			}
+%		}\right.
+%	}{
+%		#2:
+%		\ifthenelse{\isempty{#3}\AND\isempty{#4}}{
+%			\left.
+%			\setlength\arraycolsep{2pt}
+%			#5\ \IfBooleanTF{#1}\mapsto\longmapsto\ #6
+%			\setlength\arraycolsep\defaultarraycolsep
+%		}{
+%			\ifthenelse{\isempty{#5}\AND\isempty{#6}}{
+%				\left.
+%				\setlength\arraycolsep{2pt}
+%				#3\ \IfBooleanTF{#1}\rightarrow\longrightarrow\ #4
+%				\setlength\arraycolsep\defaultarraycolsep
+%			}{
+%				\left|
+%				\begin{array}{rcl}
+%					#3 & \longrightarrow & #4 \\
+%					#5 & \longmapsto & #6 \\
+%				\end{array}
+%			}
+%		}\right.
+%	}
+%}
+%\makeatother
+%\NewDocumentCommand{\fun}{s O{} O{} D(){} D(){}}{def}
+\newcommand{\fun}[2]{#1\mapsto #2}
+
+% fonctions particulières
+\newcommand{\id}[1][]{\operatorname{Id}_{#1}}
+\NewDocumentCommand{\indicatrice}{g}{\IfValueTF{#1}{\mathds{1}_{#1}}{\mathds{1}}}
+
+% opérations sur les fonctions
+\NewDocumentCommand{\recipr}{m O{1}}{{#1}^{-#2}}
+\newcommand{\compo}{\circ}
+
+% notations de landau
+\NewDocumentCommand{\dom}{m t_ G{}}{
+	\IfBooleanTF{#2}
+	{\underset{\mathclap{{\scriptscriptstyle #3}}}{\mathcal O}\!}
+	{\mathcal O\!}
+	\left(#1\right)
+}
+\NewDocumentCommand{\negl}{s m t_ G{}}{
+	\IfBooleanTF{#3}
+	{\underset{{\scriptscriptstyle\mathclap{\substack{#4}}}}{o}}
+	{o}
+	\IfValueTF{#1}
+	{(#2)}
+	{\!\p{#2}}
+}
+\let\oldsim\sim
+\RenewDocumentCommand{\sim}{t_ G{}}{
+	\IfBooleanTF{#1}
+	{\underset{\mathclap{{\scriptscriptstyle #2}}}{\oldsim}}
+	{\oldsim}
+}
+
+% limites
+\let\oldto\to
+\RenewDocumentCommand{\to}{t_ G{} t^ G{}}{
+	\IfBooleanTF{#1}
+	{
+		\IfBooleanTF{#3}
+		{
+			\xrightarrow[{\scriptscriptstyle #2}]{{\scriptscriptstyle #4}}
+		}
+		{
+			\xrightarrow[{\scriptscriptstyle #2}]{}
+		}
+	}
+	{
+		\IfBooleanTF{#3}
+		{
+			\xrightarrow{{\scriptscriptstyle #4}}
+		}
+		{
+			\mathchoice{\oldto}{\oldto}{\shortrightarrow}{\shortrightarrow}
+		}
+	}
+}
+
+% noyau et image
+\DeclareMathOperator{\Ker}{Ker}
+\let\Im\relax
+\DeclareMathOperator{\Im}{Im}
+
+\newcommand{\rang}{\operatorname{rg}}
+\newcommand{\rg}{\rang}
+
+% vecteurs
+% à revoir
+\newcommand{\vect}[1]{\left(\begin{smallmatrix}#1\end{smallmatrix}\right)}
+
+% matrices
+\DeclareMathOperator{\tr}{tr}
+\newcommand{\transp}[2][-3mu]{\ensuremath{\mskip1mu\prescript{\smash{\mathrm{t}\mkern#1}}{}{\mathstrut #2}}}
+\newcommand{\spectre}{S_p}
+
+% espaces
+\newcommand{\orthosum}{\overset{\perp}{\oplus}}
+
+% barycentres
+\DeclareMathOperator{\opBar}{Bar}
+\renewcommand{\Bar}{\opBar}
+
+% intégrales
+\NewDocumentCommand{\diff}{t^ G{}}{
+	\IfValueTF{#1}
+	{\mathop{}\!\mathrm{d^{#2}}}
+	{\mathop{}\!\mathrm d #2}
+}
+
+% Différentielles
+\NewDocumentCommand{\tdiff}{O{} m m}{\dfrac{\diff^{#1}#2}{\diff{}{#3}^{#1}}}
+\NewDocumentCommand{\pdiff}{O{} m m}{\dfrac{\partial^{#1}#2}{\partial{#3}^{#1}}}
+
+% Probabilités
+\newcommand{\tribu}{\mathscr{A}}
+
+\newcommand{\E}{\mathbb{E}} %espérance
+\newcommand{\V}{\mathcal{V}} %variance
+\newcommand{\Cov}{\text{Cov}}
+\newcommand{\follow}{\hookrightarrow}
+
+\newcommand{\uniform}{\mathscr{U}}
+\newcommand{\binomial}{\mathscr{B}}
+\newcommand{\geometric}{\mathscr{G}}
+\newcommand{\poisson}{\mathscr{P}}
+
+
+%- ----------  PHYCH  ---------- -%
+
+
+% unités
+\newcommand{\unitof}[1]{\left[ #1 \right]}
+
+\makeatletter
+%\newcommand{\unitauxaux}[2]{
+%	\ifthenelse{\isempty{#1}}
+%	{\text{#2}}
+%	{
+%		\IfInteger{#1}
+%		{
+%			\text{#2}\textsuperscript{#1}
+%		}
+%		{
+%			\StrGobbleLeft{#1}{1}[\@remaining]
+%			\StrChar{#1}{1}[\@firstchar]
+%			\edef\@expanded{#2\@firstchar}
+%			\expandafter\expandafter\expandafter\unitauxaux\expandafter\expandafter\expandafter{\expandafter\@remaining\expandafter}\expandafter{\@expanded}
+%		}
+%	}	
+%}
+
+\newcommand{\unitauxaux}[2]{
+	\ifthenelse{\isempty{#1}}
+	{\text{#2}}
+	{
+		\StrLeft{#1}{1}[\@first]
+		\ifthenelse{\equal{\expandafter\the\expandafter\catcode\expandafter`\@first}{11}}
+		{
+			\StrGobbleLeft{#1}{1}[\@remaining]
+			\StrChar{#1}{1}[\@firstchar]
+			\edef\@expanded{#2\@firstchar}
+			\expandafter\expandafter\expandafter\unitauxaux\expandafter\expandafter\expandafter{\expandafter\@remaining\expandafter}\expandafter{\@expanded}
+		}
+		{
+			\text{#2}\textsuperscript{#1}
+		}
+	}	
+}
+
+
+\newcommand{\unitaux}[1]{
+	\ifthenelse{\isempty{#1}}
+	{}
+	{
+		\StrCut{#1}{.}{\@leftpart}{\@rightpart}
+		\expandafter\ifthenelse\expandafter{\expandafter\isempty\expandafter{\@rightpart}}
+		{
+			\expandafter\unitauxaux\expandafter{\@leftpart}{}
+		}
+		{
+			\expandafter\unitauxaux\expandafter{\@leftpart}{}\text.\expandafter\unitaux\expandafter{\@rightpart}
+		}
+	}
+}
+
+\newcommand{\unit}[1]{\ \unitaux{#1}}
+\makeatother
+
+% écriture scientifique
+\NewDocumentCommand{\e}{s m}{\IfBooleanTF{#1}{}{\cdot} 10^{#2}}
+
+% opérateurs vectoriels
+
+\DeclareMathOperator{\opdiv}{div}
+\DeclareMathOperator{\oprot}{rot}
+\DeclareMathOperator{\opgrad}{grad}
+\makeatletter
+\renewcommand{\div}{\opdiv\@ifnextchar({}{\@ifnextchar\left({}{}}}
+\newcommand{\rot}{\overrightarrow\oprot\@ifnextchar({}{\@ifnextchar\left({}{\ }}}
+\newcommand{\grad}{\overrightarrow\opgrad\@ifnextchar({}{\@ifnextchar\left({}{\ }}}
+\makeatother
+\newcommand{\lapl}{\mathbin\Delta}
+
+% géométrie
+
+\newcommand{\dist}[1]{\overline{#1}} %distance entre deux points
+
+% mécanique
+
+\newcommand{\referentiel}{\mathcal{R}}
+\NewDocumentCommand{\ptref}{O{M} O{\referentiel}}{\nicefrac{#1}{#2}} % ptref = point / réferentiel
+\newcommand{\ecinetique}{E_{\text{c}}}
+\newcommand{\puissance}{\mathcal{P}}
+
+% thermodynamique
+
+\newcommand{\avogadro}{\mathcal{N}_{\!\text{A}}} % nombre d'avogadro
+\newcommand{\boltzmann}{k_{\text{B}}} % constante de Boltzmann
+
+% Graphiques dans TikZ
+
+% #1 : inf_x,sup_x,nb_graduation_x; #2 : inf_y,sup_y,step_graduation_y
+\makeatletter
+\newcommand{\tikzgrid}[2]{
+	\def\tikzgrid@getxrange##1,##2,##3{\def\tikzgrid@infx{##1}\def\tikzgrid@supx{##2}\def\tikzgrid@gradx{##3}}
+	\def\tikzgrid@getyrange##1,##2,##3{\def\tikzgrid@infy{##1}\def\tikzgrid@supy{##2}\def\tikzgrid@grady{##3}}
+	\tikzgrid@getxrange{#1}
+	\tikzgrid@getyrange{#2}
+	\begin{scope}
+		\clip (\tikzgraph@infx, \tikzgraph@infy) rectangle (\tikzgraph@supx, \tikzgraph@supy)
+		\foreach \x in {\tikzgraph@infx-1,\tikzgraph@infx,...,\tikzgraph@supx+1}
+			\foreach \k \in {0,1,...,\tikzgrid@gradx} 
+				{\draw (\x + \k/\tikzgrid@gradx, \tikzgrid@infy) -- (\x + \k/\tikzgrid@gradx, \tikzgrid@supy);}
+				
+		\foreach \y in {\tikzgraph@infy-1,\tikzgraph@infy,...,\tikzgraph@supy+1}
+			\foreach \k \in {0,1,...,\tikzgrid@grady} 
+				{\draw (\tikzgrid@infx, \y + \k/\tikzgrid@grady) -- (\tikzgrid@supx, \y + \k/\tikzgrid@grady);}
+	\end{scope}
+}
+
+\newcommand{\tikzloggrid}[2]{
+	\def\tikzloggrid@getxrange##1,##2,##3{\def\tikzloggrid@infx{##1}\def\tikzloggrid@supx{##2}\def\tikzloggrid@gradx{##3}}
+	\def\tikzloggrid@getyrange##1,##2,##3{\def\tikzloggrid@infy{##1}\def\tikzloggrid@supy{##2}\def\tikzloggrid@grady{##3}}
+	\tikzloggrid@getxrange{#1}
+	\tikzloggrid@getyrange{#2}
+	\newlength\tikzloggrid@infinfx
+	\newlength\tikzloggrid@supsupx
+	\newlength\tikzloggrid@infinfy
+	\newlength\tikzloggrid@supsupy
+	\setlength\tikzloggrid@infinfx{\tikzloggrid@infx - 1}
+	\setlength\tikzloggrid@supsupx{\tikzloggrid@supx + 1}
+	\setlength\tikzloggrid@infinfy{\tikzloggrid@infy - 1}
+	\setlength\tikzloggrid@supsupy{\tikzloggrid@supy + 1}
+	\begin{scope}
+		\clip (\tikzloggrid@infx, \tikzloggrid@infy) rectangle (\tikzloggrid@supx, \tikzloggrid@supy);
+		\foreach \x in {\tikzloggrid@infinfx,\tikzloggrid@infx,...,\tikzloggrid@supsupx}
+			\foreach \k \in {0,1,...,\tikzloggrid@gradx} 
+				{\draw ({\x + ln(\k)/ln(10)/ln(\tikzloggrid@gradx)}, \tikzloggrid@infy) -- ({\x + ln(\k)/ln(10)/ln(\tikzloggrid@gradx)}, \tikzloggrid@supy);}
+		
+		\foreach \y in {\tikzloggrid@infinfy,\tikzloggrid@infy,...,\tikzloggrid@supsupy}
+			\foreach \k \in {0,1,...,\tikzloggrid@grady} 
+				{\draw (\tikzloggrid@infx, \y + \k/\tikzloggrid@grady) -- (\tikzloggrid@supx, \y + \k/\tikzloggrid@grady);}
+	\end{scope}
+}
+
+% #1 : name x axis; [#2] : x axis y position; #3 : name y axis; [#4] : y axis x position
+\NewDocumentCommand{\tikzaxis}{m m O{} O{0} m m O{} O{0}}{
+	\draw[>=latex,->] (#1,#4) -- (#2,#4);
+	\draw[>=latex,->] (#8,#5) -- (#8,#6);
+	\draw (#2,#4) node[right] {#3};
+	\draw (#6,#8) node[top] {#7};
+}
+
+% #1 : {infx,infxstep,...,supx}; [#2] : y position graduation; [#3] : optional display \x -> smth; (#4) : position node;
+% #5 : {infy,infystep,...,supy}; [#5] : x position graduation; [#6] : optional display \y -> smth; (#6) : position node 
+\NewDocumentCommand{\tikzgraduations}{m O{0} O{$\k$} D(){top} m O{0} O{$\k$} D(){left}}{
+	\foreach \k in {#1}
+		{\draw (\k,#2) node[#4] {#3};}
+	\foreach \k in {#5}
+		{\draw (\k,#6) node[#8] {#7};}
+}
+
+% #1 : lua lambda function x -> f(x); [#2] : draw options; [#3] : plot options; [#4] : x plot form
+\NewDocumentCommand{\plotfunc}{m O{} O{} O{\x}}{
+	\directlua{
+		function Lambda (x)
+			#1
+		return
+	}
+	\pgfmathdeclarefunction{lambda}{1}{
+		\directlua{tex.print(Lambda(##1))}
+	}
+	\draw[#2] plot[#3] (#4,{lambda(\x)});
+}
+\makeatother
+
+\tikzset{
+	declare function={% in case of CVS which switches the arguments of atan2
+		atan3(\a,\b)=ifthenelse(atan2(0,1)==90, atan2(\a,\b), atan2(\b,\a));},
+	kinky cross radius/.initial=+.125cm,
+	@kinky cross/.initial=+, kinky crosses/.is choice,
+	kinky crosses/left/.style={@kinky cross=-},kinky crosses/right/.style={@kinky cross=+},
+	kinky cross/.style args={(#1)--(#2)}{
+		to path={
+			let \p{@kc@}=($(\tikztotarget)-(\tikztostart)$),
+			\n{@kc@}={atan3(\p{@kc@})+180} in
+			-- ($(intersection of \tikztostart--{\tikztotarget} and #1--#2)!%
+			\pgfkeysvalueof{/tikz/kinky cross radius}!(\tikztostart)$)
+			arc [ radius     =\pgfkeysvalueof{/tikz/kinky cross radius},
+			start angle=\n{@kc@},
+			delta angle=\pgfkeysvalueof{/tikz/@kinky cross}180 ]
+			-- (\tikztotarget)}}}
+
+
+
+%%%%% CAML
+
+
+\newcommand{\nil}{\text{nil}}
+
+
+
+
+
+
+\endinput

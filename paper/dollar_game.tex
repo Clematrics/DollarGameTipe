@@ -1,0 +1,307 @@
+\documentclass{article}
+
+\usepackage{cardsheader}
+
+\usepackage{biblatex}
+\usepackage[nottoc]{tocbibind}
+
+\usepackage{caption}
+
+\usepackage{hyperref}
+
+\usepackage{amsthm}
+\renewcommand{\qedsymbol}{$\blacksquare$}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{listings}
+\usepackage[cache=false]{minted}
+
+\usetikzlibrary{arrows.meta}
+
+\definecolor{highlight}{HTML}{9E9000}
+\usepackage{soul}
+\usepackage{pdfcomment}
+\sethlcolor{highlight}
+\newcommand{\debug}{false}
+\newcommand{\note}[2]{
+	\ifthenelse{\equal{\debug}{true}}{
+		\hl{#1}\pdfcomment{#2}
+	}{
+		#1
+	}
+}
+
+\title{Algorithmes de résolution du jeu du dollar}
+\author{}
+\date{}
+
+%%%
+
+\newcommand{\val}{\operatorname{val}}
+\newtheorem{definition}{Définition}
+\newtheorem{theorem}{Théorème}
+\newtheorem{corollary}{Corollaire}[theorem]
+\newtheorem*{remark}{Remarque}
+
+%%%
+
+\begin{document}
+%\color{white}
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+Le jeu du dollar est un problème posé par N.L.Biggs \cite{1} et dérivé du \textit{chip-firing game}, introduit dans les années 90 par A. Björner, L. Lovász et P. W. Shor. \cite{2}. 
+Le jeu consiste en un graphe connexe (orienté ou non) où chaque sommet est pondéré par un entier relatif, représentant une somme d'argent en dollars, et plus particulièrement une dette si le nombre associé est négatif.
+Le jeu prend alors un tel graphe comme condition initiale, et tour à tour, autorise deux mouvements :
+un prêt est un coup lors duquel un sommet donne un dollar à chacun de ses sommets adjacents, quitte à être en dette ; et un emprunt est un coup, lors duquel un sommet prend un dollar à chacun de ses sommets adjacents.
+Le problème de ce jeu est de pouvoir trouver une suite de coups de longueur minimale, si elle existe, telle qu'à l'issue de ceux-ci, le graphe ne comporte plus de sommets présentant des dettes.
+
+Dans cet exposé, je m'intéresserai uniquement à des graphes non-orientés.
+
+\tikzstyle{sommet} = [draw,circle,outer sep=0,inner sep=1,minimum size=10, align=center, text width=.8cm]
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		\begin{scope}[transform canvas={xshift=-6cm}]
+			\node [sommet] (v1) at (0,2) {a \\ $-4$ \\};
+			\node [sommet] (v2) at (-2,0) {b \\ $4$ \\};
+			\node [sommet] (v3) at (0,-2) {c \\ $0$ \\};
+			\node [sommet] (v4) at (2,0) {d \\ $2$ \\};
+			\draw  (v1) edge (v2);
+			\draw  (v3) edge (v1);
+			\draw  (v2) edge (v3);
+			\draw  (v1) edge (v4);
+		\end{scope}
+
+		\begin{scope}
+			\node [sommet] (v1) at (0,2) {a \\ $-3$ \\};
+			\node [sommet] (v2) at (-2,0) {b \\ $2$ \\};
+			\node [sommet] (v3) at (0,-2) {c \\ $1$ \\};
+			\node [sommet] (v4) at (2,0) {d \\ $2$ \\};
+			\draw[-{Latex[length=3mm]}]  (v2) edge (v1);
+			\draw  (v3) edge (v1);
+			\draw[-{Latex[length=3mm]}]  (v2) edge (v3);
+			\draw  (v1) edge (v4);
+		\end{scope}
+
+		\begin{scope}[transform canvas={xshift=6cm}]
+			\node [sommet] (v1) at (0,2) {a \\ $0$ \\};
+			\node [sommet] (v2) at (-2,0) {b \\ $1$ \\};
+			\node [sommet] (v3) at (0,-2) {c \\ $0$ \\};
+			\node [sommet] (v4) at (2,0) {d \\ $1$ \\};
+			\draw[-{Latex[length=3mm]}]  (v2) edge (v1);
+			\draw[-{Latex[length=3mm]}]  (v3) edge (v1);
+			\draw  (v2) edge (v3);
+			\draw[-{Latex[length=3mm]}] (v4) edge (v1);
+		\end{scope}
+	\end{tikzpicture}
+
+	\caption{Un exemple de séquence : un prêt est effectué par le sommet b, puis un emprunt par le sommet a. À l'issu de ces coups, aucun sommet n'a de dettes.}
+	\label{exemple}
+\end{figure}
+
+Je définirai dans un premier temps quelques notions et un résultat restreignant le champ des graphes étudiés. Je présenterai ensuite différents algorithmes de résolution du jeu et en ferai l'étude théorique. Ces algorithmes ont pû être testés grâce à une implémentation en python utilisant l'environnement de développement \href{https://py.processing.org/}{Processing.py}. Ces algorithmes permettent de trouver une séquence de coups qui résolve le jeu, mais qui n'est pas minimale. Je présente alors plusieurs moyens de minimiser cette séquence, indépendamment du graphe étudié.
+
+\section{Résultats théoriques}
+
+J'introduis d'abord quelques notions.
+
+\begin{definition}
+	La valeur d'un sommet $v$, notée $\val(v) \in\N$, donne la pondération de ce sommet, c'est-à-dire le nombre de dollars que <<possède>> le sommet.
+\end{definition}
+\begin{definition}
+	un sommet \textit{pauvre} $v$ est un sommet tel que $\val(v) < 0$. On dit aussi que c'est un sommet en dettes.
+	Un sommet \textit{suffisant} est un sommet tel que $\val(v) \in\intrg{0}{\deg{v} - 1}$. C'est un sommet qui n'a pas de dettes mais qui ne peut pas faire un prêt sans tomber en dette.
+	Un sommet \textit{riche} est un sommet tel que $\val(v) \ge \deg{v}$, c'est-à-dire qui peut effectuer un ou plusieurs prêts.
+\end{definition}
+
+\begin{definition}
+	Une séquence de coups $(S_n)$ est une suite d'éléments dans $V\times \set{-1, 1}$, finie ou non, qui décrit les coups effectués : Pour $n$ un entier naturel, $S_n = (v, \epsilon)$ indique que le $n\ieme$ coup est effectué par le sommet $v$, avec $\epsilon = 1$ si le coup est un prêt, et $\epsilon = -1$ si le coup est un emprunt.
+\end{definition}
+
+La séquence de coups de la figure \ref{exemple} est par exemple $((b, 1), (a, -1))$.
+
+\begin{definition}
+	Une partie $\mathcal{P}$ est un triplet $(G, \operatorname{val}_0, (S_n))$
+	, où
+	$G = (V, E)$ est le graphe sur lequel se déroule la partie, avec $V$ l'ensemble de ses sommets et $E$ l'ensemble de ses arêtes.
+	$\func{\operatorname{val}_0}[V][\Z]$ est la pondération initiale en dollars des sommets du graphe. Par soucis de concision, j'appellerai par la suite un graphe un graphe pondéré par une telle fonction.
+	Enfin, $(S_n)$ est une séquence de coups.
+\end{definition}
+
+\begin{definition}
+	On dit que la séquence est solution en $n$ coups s'il existe un entier $n$ tel qu'au $n\ieme$ coup, aucun sommet n'est pauvre.
+\end{definition}
+\begin{definition}
+	On dit que la séquence est optimale si elle est solution en $n$ coups et s'il n'existe pas d'autres séquences qui sont solutions en $m$ coups, avec $m < n$.
+\end{definition}
+
+Le théorème suivant, issu de \cite{3}, permet de donner une condition suffisante d'existence d'une séquence solution.
+
+\begin{theorem}
+	Si le nombre d'Euler du graphe $g = \card{E} - \card{V} + 1$ est inférieur ou égal au nombre total de dollars $N$ sur le graphe, alors il existe toujours une séquence solution.
+\end{theorem}
+\begin{remark}
+	Dans le cas où $g$ est strictement supérieur à $N$, il n'existe pas toujours de séquences solution du jeu. En particulier, il est possible de montrer qu'il existe toujours une configuration initiale ayant $N$ dollars au total pour laquelle il n'existe pas de séquence solution.
+\end{remark}
+
+Dans la suite, je me restreindrai uniquement aux graphes ayant au moins une séquence solution. Dans l'implémentation python notamment, je suppose que le graphe vérifie la relation $g \le N$.
+
+\section{Algorithmes de résolutions}
+
+Je propose deux algorithmes permettant de trouver une séquence solution d'un graphe $G = (V, E)$ avec une pondération initiale.
+
+J'utilise les notations suivantes :
+\begin{itemize}
+	\item ENDETTE() la fonction vérifiant si le graphe contient encore des sommets endettés ou non.
+	\item SORT\_BY\_VALUE(L) la fonction triant de manière croissante une liste de sommet L par leur quantité de dollars.
+	\item BORROW($v$) la procédure effectuant un emprunt par le sommet $v$.
+	\item GIVE($v$) la procédure effectuant un prêt par le sommet $v$.
+\end{itemize}
+
+\begin{algorithm}
+	\caption{Algorithme utilisant seulement des emprunts}
+	\begin{algorithmic}
+		\WHILE{ENDETTE()}
+			\STATE POOR $\gets$ []
+			\FORALL{$v\in\mathcal{V}$}
+				\IF{$\val(v)$ $< 0$}
+					\STATE POOR $\gets \{v\}\ \cup $ POOR
+				\ENDIF
+			\ENDFOR
+			\STATE POOR\_SORTED $\gets$ SORT\_BY\_VALUE(POOR)
+			\STATE $v \gets$ POOR\_SORTED[0]
+			\STATE BORROW($v$)
+		\ENDWHILE
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Algorithme naïf}
+	\begin{algorithmic}
+		\WHILE{ENDETTE()}
+			\STATE POOR = []
+			\STATE WEALTHIES = []
+			\FORALL{$v\in\mathcal{V}$}
+				\IF{VALUE($v$) $< 0$}
+					\STATE POOR $\gets \{v\}\ \cup$ POOR
+				\ELSIF{$\val(v) > \deg{v}$}
+					\STATE WEALTHIES $\gets \{v\}\ \cup$ WEALTHIES				
+				\ENDIF
+			\ENDFOR
+			\IF{$\abs{\text{WEALTHIES}} > 0$}
+				\STATE WEALTHIES\_SORTED = SORT\_BY\_VALUE(WEALTHIES)
+				\STATE $v \gets$ WEALTHIES\_SORTED[0]
+				\STATE GIVE($v$)
+			\ELSE
+				\STATE POOR\_SORTED = SORT\_BY\_VALUE(POOR)
+				\STATE $v \gets$ POOR\_SORTED[0]
+				\STATE BORROW($v$)
+			\ENDIF
+		\ENDWHILE
+	\end{algorithmic}
+\end{algorithm}
+
+Ces deux algorithmes servent de point de départ : ils permettent de trouver une séquence solution en $n$ coups, à partir de laquelle il est possible d'en tirer une séquence solution en $m$ coups, avec $m < n$.
+
+Le premier algorithme a l'avantage de fonctionner le plus souvent sur des graphes aléatoires, tandis que le second effectue la plupart du temps une séquence solution plus courte que le premier.
+
+\section{Minimisation des séquences}
+
+La partie précédente fournie une séquence de coups qui résout le jeu. Je m'intéresse à présent à plusieurs moyens de minimiser cette séquence solution.
+Trois résultats permettent ceci.
+
+\begin{theorem}
+	L'ordre des coups n'importe pas.
+\end{theorem}
+\begin{proof}
+	Chaque coup consiste en effet à ajouter ou à soustraire une certaine quantité (éventuellement nulle) à la valeur des sommets du graphe. L'addition étant commutative, il est possible de réordonner la séquence à souhait.
+\end{proof}
+
+Ce résultat permet alors de réduire une séquence solution à un sous-ensemble de $V\times\N*\times\set{-1, 1}$, où pour chaque sommet est attribué un nombre d'emprunt et de prêts.
+Dans le cas de la figure \ref{exemple}, la séquence est représentée ainsi : $\set{(b, 1, 1), (a, 1, -1)}$ : $b$ effectue un seul prêt, et $a$ effectue un seul emprunt. Si $b$ effectuait deux prêts, la séquence serait représentée ainsi : $\set{(b, 2, 1), (a, 1, -1)}$. J'omets ici les sommets n'ayant fait aucun coup pour plus de clarté.
+
+\begin{theorem}
+	Un prêt et un emprunt effectué par le même sommet équivaut à ne rien faire.
+\end{theorem}
+Ce dernier résultat permet d'annuler les emprunts et les prêts effectués par un même sommet, ce qui permet donc de réduire à nouveau la représentation d'une séquence solution, cette fois à un sous-ensemble de $V\times\Z$ : à chaque sommet est associé un entier relatif $z$, négatif s'il effectue $\abs{z}$ emprunts, et positif s'il effectue $z$ prêts.
+
+Enfin, voici un dernier résultat permettant d'éventuellement réduire une séquence solution indépendamment du graphe.
+
+\begin{theorem}
+	Un prêt est équivalent à une série d'emprunts.
+\end{theorem}
+\begin{proof}
+	Soit $v$ un sommet. En considérant le coup $(v, +1)$, la séquence de coups $((v', -1))_{v'\in V \setminus \set{v}}$ est équivalente.
+	En effet, chaque arête du graphe sert à faire transiter un même dollar dans les deux sens, excepté les arêtes adjacentes à $v$, qui ne servent qu'à faire transiter des dollars de $v$ vers ses voisins.
+\end{proof}
+\begin{corollary}
+	Réciproquement, un emprunt est équivalent à une série de prêts.
+\end{corollary}
+
+Il est possible de généraliser les résultats précédents par le théorème suivant.
+\begin{theorem}
+	Soit $W \subset V$ un sous-ensemble des sommets d'un graphe effectuant chacun un prêt. Alors la séquence correspondante est équivalente à celle des sommets de $V \setminus W$ effectuant chacun un emprunt.
+\end{theorem}
+La démonstration est identique.
+
+Les résultats précédents permettent alors de réduire assez facilement une séquence.
+En effet, en notant $W$ les sommets effectuant au moins un prêt, si $\card{W} > \nicefrac{\card{V}}{2}$, il suffit de remplacer un prêt de chaque sommet de $W$ en emprunts effectués par les sommets de $V \setminus W$.
+Il est ainsi possible de procéder ainsi jusqu'à ce que le nombre de sommets effectuant des prêts soit inférieur à $\nicefrac{\card{V}}{2}$ et que le nombre de sommets effectuant des emprunts soit aussi inférieur à $\nicefrac{\card{V}}{2}$. Ceci est possible car à chaque itération de ce processus, le nombre de coup diminue toujours d'au moins un.
+
+On obtient alors une séquence solution plus courte, parfois optimale pour de petits graphes, de l'ordre de 5 à 10 sommets et de degré maximal 5 ou moins. Obtenir des séquences optimales sur des graphes plus grand est cependant beaucoup plus rare avec cette méthode et nécessite de s'intéresser à la structure même du graphe pour en tirer avantage et diminuer encore la séquence obtenue, ou en trouver une autre.
+
+\newpage
+
+%\note{ }{Faire attention à ajouter ou enlever la ligne suivante selon output}
+%\addcontentsline{toc}{section}{Bibliographie}
+\begin{thebibliography}{9}
+	\bibitem{1}
+	N.L.Biggs.
+	\textit{Chip-Firing and the Critical Group of a Graph : Journal of Algebraic Combinatorics 9} (1999), p25-45
+
+	\bibitem{2}
+	A. Björner, L. Lovász et P. W. Shor.
+	\textit{Chip-firing games on graphs : European Journal of Combinatorics 12} (1991), p283-291
+
+	\bibitem{3}
+	M. Baker et S. Norine
+	\textit{Riemann-Roch and Abel-Jacobi theory on a finite graph, Advances	in Mathematics 215} (2007)
+\end{thebibliography}
+
+\newpage
+
+\section{Annexe}
+
+\subsection{Implémentation complète du code python}
+
+J'utilise ici l'environnement de développement Processing.py. Le programme ci-dessous permet de générer un graphe aléatoire ou de charger un graphe pondéré à partir d'un fichier, puis de le manipuler : il est possible de déplacer les sommets, de faire des prêts avec le clic gauche et des emprunts avec le clic droit sur un sommet choisi, de sauvegarder un graphe, la position de ses nœuds et sa pondération, et enfin d'appliquer un algorithme de résolution au graphe. La séquence générée s'affiche à gauche, avec le nombre total de coups effectués en bas à gauche. La partie est une solution si le carré en bas à droite est vert.
+L'algorithme peut être choisi à l'aide des touches B et N du clavier.
+Deux autres algorithmes ont été fournis, l'un consistant seulement à donner et l'autre cherchant à alterner entre un emprunt et un prêt, ceux-ci sont cependant infructueux.
+
+%\newpage
+%\setcounter{page}{0}
+%\pagenumbering{arabic}
+%\setcounter{page}{1}
+
+\catcode`_=12
+
+\section*{dollar_game.py		}\inputminted[linenos, breaklines, breakautoindent]{python}{dollar_game.py}\newpage    
+\section*{actions.py			}\inputminted[linenos, breaklines, breakautoindent]{python}{actions.py}\newpage        
+\section*{algorithm.py			}\inputminted[linenos, breaklines, breakautoindent]{python}{algorithm.py}\newpage      
+\section*{minimization.py		}\inputminted[linenos, breaklines, breakautoindent]{python}{minimization.py}\newpage
+\section*{display.py			}\inputminted[linenos, breaklines, breakautoindent]{python}{display.py}\newpage
+\section*{globals.py			}\inputminted[linenos, breaklines, breakautoindent]{python}{globals.py}\newpage
+\section*{graph.py				}\inputminted[linenos, breaklines, breakautoindent]{python}{graph.py}\newpage
+\section*{algo_naif.py			}\inputminted[linenos, breaklines, breakautoindent]{python}{algo_naive.py}\newpage
+\section*{algo_only_borrow.py	}\inputminted[linenos, breaklines, breakautoindent]{python}{algo_only_borrow.py}\newpage
+\section*{algo_only_give.py		}\inputminted[linenos, breaklines, breakautoindent]{python}{algo_only_give.py}\newpage
+\section*{algo_alternate.py		}\inputminted[linenos, breaklines, breakautoindent]{python}{algo_alternate.py}\newpage
+
+\catcode`=8
+	
+\end{document}
