@@ -1,6 +1,5 @@
 import actions
 import algorithm
-import events
 import globals
 import graph
 import minimization
@@ -23,6 +22,7 @@ buttons = []
 mode = None
 mode_description = ['manual']
 reset = None
+minim = None
 
 # classes
 
@@ -82,7 +82,9 @@ class vertexButton:
 # setup
 
 def setup_buttons():
-    global mode, reset
+    global mode, reset, minim, buttons
+    buttons = []
+
     mode = rectButton(0, 0, WindowSizeX / 4, 50,
                       actionLeft = actions.changeMode,
                       linkedData = mode_description)
@@ -178,3 +180,10 @@ def draw_balanced():
     strokeWeight(0)
     rectMode(CORNERS)
     rect(WindowSizeX - 50, WindowSizeY - 50, WindowSizeX, WindowSizeY)
+    
+def draw_benchmarking():
+    if not globals.benchmarking:
+        return
+    textSize(50)
+    textAlign(CENTER, CENTER)
+    text("benchmarking...", WindowSizeX / 2, WindowSizeY / Z)

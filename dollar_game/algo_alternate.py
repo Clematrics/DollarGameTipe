@@ -44,7 +44,8 @@ def algo():
         if len(wealthies) == 0:
             return
         wealthies = sorted(wealthies, key=lambda x: globals.graph['vertices'][x]['value'])
-        i = wealthies[-1]
+        # i = wealthies[-1]
+        i = choice(wealthies)
         globals.graph['vertices'][i]['action_give']()
     else:
         poor = poor_vertices()

@@ -7,7 +7,7 @@ import algo_only_give
 import algo_naive
 
 algorithms = {
-    "": (lambda: None),
+    "manual": (lambda: None),
     "naive": algo_naive.algo,
     "only borrow": algo_only_borrow.algo,
     "only_give": algo_only_give.algo,

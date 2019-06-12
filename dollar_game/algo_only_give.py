@@ -2,6 +2,7 @@ import actions
 import display
 import globals
 import graph
+import random
 
 def debts():
     debt = False
@@ -30,5 +31,6 @@ def algo():
     wealthies = rich_vertices()
     if len(wealthies):
         wealthies = sorted(wealthies, key=lambda i: globals.graph['vertices'][i]['value'])
-        i = wealthies[0]
+        # i = wealthies[0]
+        i = random.choice(wealthies)
         globals.graph['vertices'][i]['action_give']()

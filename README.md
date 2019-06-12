@@ -41,6 +41,9 @@ You can also reset a graph (it won't reset the position of the vertices however)
 
 On the left is the list of moves you or the algorithm made. A `<-> 6` means that the vertex `6` made a give move, while `>-< 10` means that the vertex `10` made a borrow move.
 
+A benchmarking mode was added to test performances of an algorithm. Select an algorithm first using the `b` and `n` keys, then press `t` to start the benchmark. To stop it, just press `t` again. The benchmark will use randomly generated graphs with the parameters given at the beginning of the `dollar_age.pyde` file. You can also ajust the number of graphs you want the algorithm to test by changing the `benchmark_count` variable. If an algorithm could not solve a graph, you can adjust `benchmark_moves_attempts`, which hold the number of moves it will try before giving up and going to the next graph.
+You can then consult the result of the benchmark by pressing `y`. It will create a file `results.csv` and output values to it,  like the maximum number of moves for a graph, the average, the number of moves after minimizing the sequence, and so on.
+
 # Requirements
 
 For the program to launch, you will need [Processing](https://processing.org/) and its module PyProcessing, available to download inside the software.

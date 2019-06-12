@@ -4,6 +4,7 @@ import display
 import globals
 from   math import exp, sqrt
 import random
+import Queue
 
 import json
 
@@ -52,6 +53,26 @@ def load():
     globals.start = graph
     globals.graph = deepcopy(graph)
 
+def connected_components(graph):
+    q = Queue.Queue()
+    components = Queue.Queue()
+    unseen_vertices = [v['index'] for v in graph['vertices']]
+    
+    while unseen_vertices != []:
+        component = []
+        q.put(unseen_vertices[0])
+        while not q.empty():
+            v = q.get()
+            if v not in unseen_vertices:
+                continue
+            unseen_vertices.remove(v)
+            component.append(v)
+            for neighbor in neighbors_of_graph(v, graph):
+                q.put(neighbor)
+        components.put(component)
+        
+    return components
+
 def generateRandom(nodes, maxEdges, max_debt = -10, strongly_winnable = True):
     graph = dict()
     graph['vertices'] = []
@@ -70,6 +91,15 @@ def generateRandom(nodes, maxEdges, max_debt = -10, strongly_winnable = True):
         other_nodes.remove(v['index'])
         neighbors = [ random.choice(other_nodes) for _ in range(edges) ]
         graph['edges'].extend([(v['index'], n) for n in neighbors])
+        
+    components = connected_components(graph)
+    while components.qsize() > 1:
+        comp_1 = components.get()
+        comp_2 = components.get()
+        a = random.choice([v for v in comp_1 if len(neighbors_of_graph(i, graph))])
+        b = random.choice([v for v in comp_2 if len(neighbors_of_graph(i, graph))])
+        graph['edges'].append([a, b])
+        components.put(comp_1 + comp_2)
 
     optimizeGraphDisplay(graph)
 
@@ -81,8 +111,11 @@ def generateRandom(nodes, maxEdges, max_debt = -10, strongly_winnable = True):
     else:
         for v in graph['vertices']:
             v['value'] = random.randint(-5, 5)
-    globals.start = graph
+    globals.start = deepcopy(graph)
     globals.graph = deepcopy(graph)
+    display.setup_buttons()
+    globals.actions = []
+    display.transfers = []
 
 ###################
 ### Graph utils ###
@@ -96,6 +129,9 @@ def balanced():
 
 def neighbors_of(i):
     return [ a if b == i else b for [a,b] in globals.graph['edges'] if a == i or b == i ]
+
+def neighbors_of_graph(i, graph):
+    return [ a if b == i else b for [a,b] in graph['edges'] if a == i or b == i ]
 
 def degree_of(i):
     deg = 0

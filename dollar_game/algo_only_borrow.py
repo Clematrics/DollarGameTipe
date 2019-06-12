@@ -2,6 +2,7 @@ import actions
 import display
 import globals
 import graph
+import random
 
 def debts():
     debt = False
@@ -26,6 +27,6 @@ def algo():
         return
 
     poor = poor_vertices()
-    poor = sorted(poor, key=lambda i: globals.graph['vertices'][i]['value'])
-    i = poor[0]
+    # poor = sorted(poor, key=lambda i: globals.graph['vertices'][i]['value'])
+    i = random.choice(poor)
     globals.graph['vertices'][i]['action_take']()

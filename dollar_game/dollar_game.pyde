@@ -1,17 +1,20 @@
-custom_graph = True
+custom_graph = False
 custom_graph_name = "graph_peterson"
 random_graph_size = 15
 random_graph_degree = 4
+benchmark_count = 5000
+benchmark_moves_attempts = 500
 
 import actions
 import algorithm
+import benchmark
 import display
 import globals
 import graph
 
 def setup():
     size(display.WindowSizeX, display.WindowSizeY)
-    frameRate(25)
+    frameRate(200)
 
     if custom_graph:
         globals.graph_name = custom_graph_name
@@ -33,17 +36,30 @@ def draw():
     for b in display.buttons:
         b.display()
     display.draw_selected_algorithm()
+    display.draw_benchmarking()
 
     if not globals.manual_mode:
         algorithm.selected_algorithm()()
+    if globals.benchmarking:
+        benchmark.update()
 
 def keyPressed():
-    if key == 'a' or key == 'A':
-        display.mode.actionLeft()
-    if key == 'b':
-        algorithm.select_prec()
-    if key == 'n':
-        algorithm.select_next()
+    if not globals.benchmarking:
+        if key == 'a' or key == 'A':
+            display.mode.actionLeft()
+        if key == 'b':
+            algorithm.select_prec()
+        if key == 'n':
+            algorithm.select_next()
+        if key == 'g':
+            graph.generateRandom(random_graph_size, random_graph_degree)
+    if key == 't':
+        if globals.benchmarking:
+            globals.benchmarking = False
+        else:
+            benchmark.benchmark(random_graph_size, random_graph_degree, benchmark_count, benchmark_moves_attempts)
+    if key == 'y':
+        benchmark.export_results()
 
 def mouseClicked():
     if not globals.manual_mode:
