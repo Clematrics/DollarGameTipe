@@ -39,8 +39,8 @@ def optimizeGraphDisplay(graph):
     graph_width = maxX - minX if maxX - minX else 2
     graph_height = maxY - minY if maxY - minY else 2
     for v in graph['vertices']:
-        x = int( (v['pos'][0] - minX) * (2050 - 150) / graph_width + 150 )
-        y = int( (v['pos'][1] - minY) * (110 - 1250) / graph_height + 1250 )
+        x = int( (v['pos'][0] - minX) * (display.RightBorder - 150) / graph_width + 150 )
+        y = int( (v['pos'][1] - minY) * (110 - display.BottomBorder) / graph_height + display.BottomBorder )
         v['pos'] = [x,y]
 
 def load():

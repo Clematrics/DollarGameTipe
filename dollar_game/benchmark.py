@@ -12,11 +12,12 @@ max_attempts = 1000
 progress = 0
 
 def benchmark(sz, deg, n, m = 400):
-    global graph_size, graph_degree, number_tests, max_attempts
+    global graph_size, graph_degree, number_tests, max_attempts, progress
     if algorithm.selected_key() == "manual":
         return
 
     graph_size, graph_degree, number_tests, max_attempts = sz, deg, n, m
+    progress = 0
     globals.benchmarking = True
     perf[algorithm.selected_key()]['trials'] += number_tests
     display.mode.actionLeft()
@@ -35,7 +36,6 @@ def update():
         progress += 1
         graph.generateRandom(graph_size, graph_degree)
     if progress == number_tests:
-        progress = 0
         globals.benchmarking = False
 
 def export_results():

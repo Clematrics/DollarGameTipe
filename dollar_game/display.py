@@ -7,8 +7,8 @@ import minimization
 # Window parameters
 
 Border = 50
-WindowSizeX = 2100
-WindowSizeY = 1300
+WindowSizeX = 1800
+WindowSizeY = 1000
 LeftBorder = Border
 RightBorder = WindowSizeX - Border
 TopBorder = Border
@@ -65,6 +65,7 @@ class vertexButton:
         self.actionDrag = actionDrag if actionDrag else actions.nullAction
         
     def display(self):
+        ellipseMode(RADIUS)
         fill(128)
         ellipse(self.vertex['pos'][0], self.vertex['pos'][1], 30, 30)
         fill(200)
@@ -130,8 +131,9 @@ def draw_actions():
     strokeWeight(4)
     stroke(128)
     textAlign(CENTER, CENTER)
+    actions_number = int( (WindowSizeY - 50) / 40 )
     try:
-        actions_to_draw = globals.actions[actions_pos: actions_pos + 31]
+        actions_to_draw = globals.actions[actions_pos: actions_pos + actions_number]
     except:
         actions_to_draw = globals.actions[actions_pos:]
     for i, a in enumerate(actions_to_draw):
@@ -147,10 +149,9 @@ def draw_actions():
         text(str(v), 70, i * 40 + 80)
 
     fill(128)
-    rect(0, 30 * 40 + 60, 100, 30 * 40 + 100)
+    rect(0, WindowSizeY, 100, WindowSizeY - 40)
     fill(255)
-    text(str(len(globals.actions)), 50, 30 * 40 + 80)
-    
+    text(str(len(globals.actions)), 50, WindowSizeY - 20)
     
 def draw_edges():
     strokeWeight(4)

@@ -1,9 +1,9 @@
 custom_graph = False
 custom_graph_name = "graph_peterson"
-random_graph_size = 15
-random_graph_degree = 4
+random_graph_size = 50
+random_graph_degree = 11
 benchmark_count = 5000
-benchmark_moves_attempts = 500
+benchmark_moves_attempts = 1000
 
 import actions
 import algorithm
